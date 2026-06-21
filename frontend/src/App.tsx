@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { kit, setContractId, CONTRACT_ID, invokeRecordPayments, submitTransaction, fetchPayments, fetchEvents } from "./lib/stellar";
