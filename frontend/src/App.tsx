@@ -33,24 +33,15 @@ function App() {
 
   const connect = async () => {
     try {
-      await kit.openModal({
-        onWalletSelected: async (option) => {
-          kit.setWallet(option.id);
-          try {
-            const { address: addr } = await kit.getAddress();
-            setAddress(addr);
-            toast.success("Wallet connected!");
-          } catch (e: any) {
-             if (e.message?.includes("not installed") || e.message?.includes("not found")) {
-                toast.error("Wallet not found. Please install the extension.");
-             } else {
-                toast.error("Connection failed: " + e.message);
-             }
-          }
-        },
-      });
+      const { address: addr } = await kit.authModal();
+      setAddress(addr);
+      toast.success("Wallet connected!");
     } catch (err: any) {
-      toast.error("Wallet modal error: " + err.message);
+      if (err.message?.includes("not installed") || err.message?.includes("not found")) {
+         toast.error("Wallet not found. Please install the extension.");
+      } else {
+         toast.error("Connection failed: " + err.message);
+      }
     }
   };
 
@@ -120,7 +111,7 @@ function App() {
     <div className="container">
       <Toaster />
       <header>
-        <h1>Payment Tracker</h1>
+        <h1>LumenStream</h1>
         {address ? (
           <div className="wallet-info">
             <span>{address.slice(0, 5)}...{address.slice(-4)}</span>

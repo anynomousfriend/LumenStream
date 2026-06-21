@@ -1,4 +1,4 @@
-# Stellar Payment Tracker (Level 2)
+# LumenStream (Stellar Multi-Payment Tracker)
 
 This repository contains a full-stack Stellar decentralized application (dApp) designed to record and track multi-address payments on the Stellar Testnet. It features a Rust-based Soroban smart contract and a modern React frontend with multi-wallet support.
 
