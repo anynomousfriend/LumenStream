@@ -1,8 +1,17 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, contracterror, symbol_short, Address, Env, Vec};
 
 #[contract]
 pub struct PaymentTracker;
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum Error {
+    LengthMismatch = 1,
+    EmptyArray = 2,
+    InvalidAmount = 3,
+}
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -20,11 +29,15 @@ pub enum DataKey {
 
 #[contractimpl]
 impl PaymentTracker {
-    pub fn record_payments(env: Env, from: Address, receivers: Vec<Address>, amounts: Vec<i128>) {
+    pub fn record_payments(env: Env, from: Address, receivers: Vec<Address>, amounts: Vec<i128>) -> Result<(), Error> {
         from.require_auth();
 
+        if receivers.len() == 0 {
+            return Err(Error::EmptyArray);
+        }
+
         if receivers.len() != amounts.len() {
-            panic!("receivers and amounts length mismatch");
+            return Err(Error::LengthMismatch);
         }
 
         let timestamp = env.ledger().timestamp();
@@ -32,6 +45,10 @@ impl PaymentTracker {
         for i in 0..receivers.len() {
             let to = receivers.get(i).unwrap();
             let amount = amounts.get(i).unwrap();
+
+            if amount <= 0 {
+                return Err(Error::InvalidAmount);
+            }
 
             let payment = Payment {
                 from: from.clone(),
@@ -55,6 +72,8 @@ impl PaymentTracker {
             // Emit event
             env.events().publish((symbol_short!("payment"), from.clone(), to.clone()), payment);
         }
+
+        Ok(())
     }
 
     pub fn get_payments(env: Env, user: Address) -> Vec<Payment> {
