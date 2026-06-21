@@ -227,7 +227,14 @@ function App() {
 
       <aside className="controls" ref={controlsRef}>
           <div className="field-group">
-              <label className="field-label">DEPLOYED CONTRACT ID</label>
+              <label className="field-label">
+                DEPLOYED CONTRACT ID 
+                {contractInput && (
+                  <a href={`https://stellar.expert/explorer/testnet/contract/${contractInput}`} target="_blank" rel="noreferrer" style={{color: 'var(--primary-blue)', marginLeft: '10px', textDecoration: 'underline'}}>
+                    [Verify on Stellar Expert Explorer]
+                  </a>
+                )}
+              </label>
               <input 
                 type="text" 
                 className="field-input" 
