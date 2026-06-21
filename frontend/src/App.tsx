@@ -330,8 +330,8 @@ function App() {
               <div style={{marginTop: '12px'}}>June 2026</div>
           </div>
 
-          <div className="logo-mark">
-              <span style={{fontSize: '18px'}}>S</span>
+          <div style={{ margin: '20px 0', width: '65px', height: '65px' }}>
+              <img src="/logo.svg" alt="LumenStream Logo" style={{ width: '100%', height: '100%' }} />
           </div>
 
           <div className="meta-group" style={{marginTop: 'auto'}}>
