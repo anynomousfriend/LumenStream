@@ -19,52 +19,86 @@ StellarWalletsKit.init({
 export const kit = StellarWalletsKit;
 
 export async function submitTransaction(signedXdr: string) {
-  const transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, networkPassphrase) as StellarSdk.Transaction;
-  const response = await rpc.sendTransaction(transaction);
+  try {
+    let transaction;
+    try {
+      transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, networkPassphrase) as StellarSdk.Transaction;
+    } catch(e: any) {
+      throw new Error(`fromXDR failed: ${e.message}`);
+    }
 
-  if (response.status === "ERROR") {
-    throw new Error(`Transaction failed: ${response.errorResult}`);
+    let response;
+    try {
+      response = await rpc.sendTransaction(transaction);
+    } catch(e: any) {
+      throw new Error(`sendTransaction failed: ${e.message}`);
+    }
+
+    if (response.status === "ERROR") {
+      throw new Error(`Transaction failed: ${response.errorResult}`);
+    }
+
+    // Poll for completion
+    let getResponse;
+    try {
+      getResponse = await rpc.getTransaction(response.hash);
+      while (getResponse.status === "NOT_FOUND") {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        getResponse = await rpc.getTransaction(response.hash);
+      }
+    } catch(e: any) {
+      throw new Error(`getTransaction failed: ${e.message}`);
+    }
+
+    if (getResponse.status === "SUCCESS") {
+      return {
+        hash: response.hash,
+        result: getResponse.returnValue,
+      };
+    }
+
+    throw new Error(`Transaction failed: ${getResponse.status}`);
+  } catch(e: any) {
+    throw new Error(`[submitTransaction] ${e.message}`);
   }
-
-  // Poll for completion
-  let getResponse = await rpc.getTransaction(response.hash);
-  while (getResponse.status === "NOT_FOUND") {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    getResponse = await rpc.getTransaction(response.hash);
-  }
-
-  if (getResponse.status === "SUCCESS") {
-    return {
-      hash: response.hash,
-      result: getResponse.returnValue,
-    };
-  }
-
-  throw new Error(`Transaction failed: ${getResponse.status}`);
 }
 
 export async function invokeRecordPayments(sourceAddress: string, receivers: string[], amounts: string[]) {
-  const account = await rpc.getAccount(sourceAddress);
-  const contract = new StellarSdk.Contract(CONTRACT_ID);
+  try {
+    const account = await rpc.getAccount(sourceAddress);
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
 
-  const receiversVal = StellarSdk.xdr.ScVal.scvVec(receivers.map(r => StellarSdk.Address.fromString(r).toScVal()));
-  const amountsVal = StellarSdk.xdr.ScVal.scvVec(amounts.map(a => StellarSdk.nativeToScVal(BigInt(a), { type: "i128" })));
+    const receiversVal = StellarSdk.xdr.ScVal.scvVec(receivers.map(r => StellarSdk.Address.fromString(r).toScVal()));
+    const amountsVal = StellarSdk.xdr.ScVal.scvVec(amounts.map(a => StellarSdk.nativeToScVal(BigInt(a), { type: "i128" })));
 
-  let transaction = new StellarSdk.TransactionBuilder(account, {
-    fee: StellarSdk.BASE_FEE,
-    networkPassphrase,
-  })
-    .addOperation(contract.call("record_payments", StellarSdk.Address.fromString(sourceAddress).toScVal(), receiversVal, amountsVal))
-    .setTimeout(180)
-    .build();
+    let transaction = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase,
+    })
+      .addOperation(contract.call("record_payments", StellarSdk.Address.fromString(sourceAddress).toScVal(), receiversVal, amountsVal))
+      .setTimeout(180)
+      .build();
 
-  const simulation = await rpc.simulateTransaction(transaction);
-  if (StellarSdk.rpc.Api.isSimulationError(simulation)) {
-    throw new Error(`Simulation failed: ${simulation.error}`);
+    let simulation;
+    try {
+      simulation = await rpc.simulateTransaction(transaction);
+    } catch(e: any) {
+      throw new Error(`rpc.simulateTransaction failed: ${e.message}`);
+    }
+    
+    if (StellarSdk.rpc.Api.isSimulationError(simulation)) {
+      throw new Error(`Simulation failed: ${simulation.error}`);
+    }
+
+    try {
+      transaction = StellarSdk.rpc.assembleTransaction(transaction, simulation).build();
+      return transaction.toXDR();
+    } catch(e: any) {
+      throw new Error(`assembleTransaction/toXDR failed: ${e.message}`);
+    }
+  } catch(e: any) {
+    throw new Error(`[invokeRecordPayments] ${e.message}`);
   }
-
-  transaction = StellarSdk.rpc.assembleTransaction(transaction, simulation).build();
-  return transaction.toXDR();
 }
 
 export async function fetchPayments(userAddress: string) {

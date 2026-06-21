@@ -123,16 +123,7 @@ header h1 {
   position: relative;
 }
 
-.central-data-image::after {
-  content: 'LIVE STREAM';
-  color: var(--bg-color);
-  font-weight: 900;
-  font-size: 40px;
-  letter-spacing: 10px;
-  opacity: 0.2;
-  position: absolute;
-  pointer-events: none;
-}
+
 
 .semicircle-bottom {
   width: 100%;

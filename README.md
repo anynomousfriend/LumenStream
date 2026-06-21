@@ -6,6 +6,24 @@ This repository contains a full-stack Stellar decentralized application (dApp) d
 
 - **Testnet Contract ID**: `CA5HUAE5DEFVN62OCCI6NCQ4LSZ2AR67FGS4XC4YURJVLB2JVRZCDM6Q`
 
+### Test Data
+If you want to test the dApp immediately without deploying your own contract, use the following details:
+
+**Contract ID**: 
+```text
+CA5HUAE5DEFVN62OCCI6NCQ4LSZ2AR67FGS4XC4YURJVLB2JVRZCDM6Q
+```
+
+**Receivers (Comma Separated)**:
+```text
+GDRYVYEFO2MKXNYQGTMMVMCVVRPNVBRPSDQFYKGVMWGEXY7DLKAXJMOZ, GBQFR2D2UVELX4PSHS2BEANTRGCQXRPGTUQW357HSWTAJKD7USL3357P
+```
+
+**Amounts (Comma Separated)**:
+```text
+100, 200
+```
+
 ---
 
 ## 🛠️ Installation & Prerequisites

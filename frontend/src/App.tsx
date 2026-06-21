@@ -149,8 +149,16 @@ function App() {
       toast.loading("Please sign in your wallet...", { id: toastId });
       let signedXdr;
       try {
-        const signResult = await kit.signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-        signedXdr = signResult.signedTxXdr;
+        let result;
+        try {
+          result = await kit.signTransaction(xdr, {
+            networkPassphrase: "Test SDF Network ; September 2015",
+          });
+        } catch (e: any) {
+          throw new Error(`[kit.signTransaction] ${e.message}`);
+        }
+        console.log("Tx signed!");
+        signedXdr = result.signedTxXdr;
       } catch (signErr: any) {
         if (signErr.message?.toLowerCase().includes("reject") || signErr.message?.toLowerCase().includes("cancel")) {
           throw new Error("Transaction rejected by user.");
@@ -257,29 +265,36 @@ function App() {
                       {payments.length > 0 && (
                           <>
                               {/* Center Contract Node */}
-                              <circle cx="240" cy="140" r="12" fill="var(--bg-color)" className="center-node" />
-                              <text x="240" y="120" fill="var(--bg-color)" fontSize="10" textAnchor="middle" letterSpacing="2" fontWeight="bold">CONTRACT</text>
+                              <g className="center-node">
+                                <rect x="195" y="110" width="90" height="60" fill="transparent" stroke="var(--bg-color)" strokeWidth="1" />
+                                <rect x="200" y="115" width="80" height="50" fill="var(--bg-color)" />
+                                <text x="240" y="145" fill="var(--text-blue)" fontSize="14" textAnchor="middle" letterSpacing="3" fontWeight="900">CORE</text>
+                              </g>
                               
                               {/* Payment Edges & Nodes */}
                               {payments.map((p, i) => {
                                   const angle = (i / payments.length) * Math.PI * 2;
                                   // Alternate radii to avoid clustering if many payments
-                                  const radius = payments.length > 4 ? (i % 2 === 0 ? 100 : 60) : 80; 
+                                  const radius = payments.length > 4 ? (i % 2 === 0 ? 120 : 80) : 100; 
                                   const x = 240 + Math.cos(angle) * radius;
                                   const y = 140 + Math.sin(angle) * radius;
                                   
                                   return (
                                     <g key={i} className="node-group">
-                                      <line x1="240" y1="140" x2={x} y2={y} stroke="var(--bg-color)" strokeWidth="1" strokeDasharray="4" />
-                                      <circle cx={x} cy={y} r="5" fill="var(--bg-color)" />
+                                      <line x1="240" y1="140" x2={x} y2={y} stroke="var(--bg-color)" strokeWidth="2" strokeDasharray="4 4" opacity="0.9" />
                                       
-                                      {/* Amount Data */}
-                                      <text x={x} y={y - 12} fill="var(--bg-color)" fontSize="10" textAnchor="middle" fontWeight="bold">
+                                      {/* Node Junction (Sharp Square) */}
+                                      <rect x={x - 4} y={y - 4} width="8" height="8" fill="var(--bg-color)" />
+                                      
+                                      {/* Amount Data Box */}
+                                      <rect x={x - 35} y={y - 34} width="70" height="24" fill="var(--bg-color)" />
+                                      <text x={x} y={y - 17} fill="var(--text-blue)" fontSize="12" textAnchor="middle" fontWeight="900" letterSpacing="0.5">
                                           {String(p.amount)} XLM
                                       </text>
                                       
-                                      {/* Address Data */}
-                                      <text x={x} y={y + 16} fill="var(--bg-color)" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                                      {/* Address Data Tag */}
+                                      <rect x={x - 40} y={y + 10} width="80" height="20" fill="transparent" stroke="var(--bg-color)" strokeWidth="1" />
+                                      <text x={x} y={y + 24} fill="var(--bg-color)" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="bold" letterSpacing="1">
                                           {String(p.to).slice(0, 4)}..{String(p.to).slice(-4)}
                                       </text>
                                     </g>
@@ -312,7 +327,7 @@ function App() {
                        <td colSpan={4} style={{opacity: 0.6}}>No payments verified on-chain yet.</td>
                      </tr>
                   )}
-                  {payments.map((p, i) => (
+                  {[...payments].reverse().map((p, i) => (
                       <tr key={i} className="payment-row" onMouseEnter={(e) => gsap.to(e.currentTarget, { backgroundColor: 'rgba(62, 95, 176, 0.1)', duration: 0.2 })} onMouseLeave={(e) => gsap.to(e.currentTarget, { backgroundColor: 'transparent', duration: 0.2 })}>
                           <td>{String(p.to)}</td>
                           <td>XLM</td>
