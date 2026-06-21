@@ -139,7 +139,29 @@ function App() {
 
   return (
     <>
-      <Toaster />
+      <Toaster position="top-right">
+        {(t) => (
+          <div
+            className={`brutalist-toast ${t.type}`}
+            style={{
+              opacity: t.visible ? 1 : 0,
+              transform: t.visible ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.95)',
+              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+          >
+            <div className={`toast-icon ${t.type}`}>
+              {t.type === 'error' && <span style={{color: 'var(--bg-color)', fontWeight: 900, lineHeight: '14px'}}>!</span>}
+              {t.type === 'success' && <span style={{color: 'var(--bg-color)', fontWeight: 900, lineHeight: '14px', fontSize: '9px'}}>✓</span>}
+            </div>
+            <div>
+              <div style={{opacity: 0.6, fontSize: '8px', marginBottom: '2px'}}>
+                {t.type === 'loading' ? 'SYS_PROC' : t.type === 'error' ? 'SYS_ERR' : 'SYS_OK'}
+              </div>
+              <div>{typeof t.message === 'function' ? t.message(t) : t.message}</div>
+            </div>
+          </div>
+        )}
+      </Toaster>
       <aside className="metadata" ref={metaRef}>
           <div className="meta-group">
               <div className="foundry-label">
