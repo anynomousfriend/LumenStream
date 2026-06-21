@@ -108,7 +108,7 @@ function App() {
       toast.loading("Please sign in your wallet...", { id: toastId });
       let signedXdr;
       try {
-        const signResult = await kit.signTransaction(xdr);
+        const signResult = await kit.signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
         signedXdr = signResult.signedTxXdr;
       } catch (signErr: any) {
         if (signErr.message?.toLowerCase().includes("reject") || signErr.message?.toLowerCase().includes("cancel")) {

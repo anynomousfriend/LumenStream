@@ -1,6 +1,8 @@
 // @ts-nocheck
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
+import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
+import { Networks } from "@creit.tech/stellar-wallets-kit";
 
 export const rpc = new StellarSdk.rpc.Server("https://soroban-testnet.stellar.org");
 export const networkPassphrase = StellarSdk.Networks.TESTNET;
@@ -9,10 +11,12 @@ export const networkPassphrase = StellarSdk.Networks.TESTNET;
 export let CONTRACT_ID = "";
 export const setContractId = (id: string) => { CONTRACT_ID = id; };
 
-export const kit = new StellarWalletsKit({
-  network: "TESTNET",
-  selectedWalletId: "freighter",
+StellarWalletsKit.init({
+  network: Networks.TESTNET,
+  modules: defaultModules(),
 });
+
+export const kit = StellarWalletsKit;
 
 export async function submitTransaction(signedXdr: string) {
   const transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, networkPassphrase) as StellarSdk.Transaction;
