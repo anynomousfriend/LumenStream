@@ -55,13 +55,44 @@ function App() {
     return () => clearInterval(interval);
   }, [address]);
 
-  // Animate nodes popping in when payments are loaded
+  // Animate nodes popping in and floating gently
   useEffect(() => {
     if (payments.length > 0) {
-      gsap.fromTo(".node-group",
+      // Kill any existing tweens to prevent overlap when re-rendering
+      gsap.killTweensOf(".node-group");
+      
+      const tl = gsap.timeline();
+      
+      // 1. Initial sharp but elegant pop-in
+      tl.fromTo(".node-group",
         { scale: 0, opacity: 0, transformOrigin: "center" },
-        { scale: 1, opacity: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.7)" }
+        { scale: 1, opacity: 1, duration: 0.8, stagger: 0.1, ease: "power3.out" }
       );
+
+      // 2. Continuous, soothing floating motion
+      tl.to(".node-group", {
+        y: "-=6",
+        duration: 3.5,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        stagger: {
+          each: 0.3,
+          from: "random"
+        }
+      }, "<0.5"); // start shortly after pop-in
+      
+      // 3. Gentle pulse on the central contract node
+      gsap.killTweensOf(".center-node");
+      gsap.to(".center-node", {
+        scale: 1.15,
+        opacity: 0.8,
+        duration: 2,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        transformOrigin: "center"
+      });
     }
   }, [payments]);
 
@@ -226,7 +257,7 @@ function App() {
                       {payments.length > 0 && (
                           <>
                               {/* Center Contract Node */}
-                              <circle cx="240" cy="140" r="12" fill="var(--bg-color)" />
+                              <circle cx="240" cy="140" r="12" fill="var(--bg-color)" className="center-node" />
                               <text x="240" y="120" fill="var(--bg-color)" fontSize="10" textAnchor="middle" letterSpacing="2" fontWeight="bold">CONTRACT</text>
                               
                               {/* Payment Edges & Nodes */}
