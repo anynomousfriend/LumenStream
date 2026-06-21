@@ -47,8 +47,8 @@ export async function invokeRecordPayments(sourceAddress: string, receivers: str
   const account = await rpc.getAccount(sourceAddress);
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
-  const receiversVal = StellarSdk.nativeToScVal(receivers.map(r => StellarSdk.Address.fromString(r).toScVal()), { type: "vec" });
-  const amountsVal = StellarSdk.nativeToScVal(amounts.map(a => StellarSdk.nativeToScVal(BigInt(a), { type: "i128" })), { type: "vec" });
+  const receiversVal = StellarSdk.xdr.ScVal.scvVec(receivers.map(r => StellarSdk.Address.fromString(r).toScVal()));
+  const amountsVal = StellarSdk.xdr.ScVal.scvVec(amounts.map(a => StellarSdk.nativeToScVal(BigInt(a), { type: "i128" })));
 
   let transaction = new StellarSdk.TransactionBuilder(account, {
     fee: StellarSdk.BASE_FEE,
