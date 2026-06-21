@@ -55,6 +55,16 @@ function App() {
     return () => clearInterval(interval);
   }, [address]);
 
+  // Animate nodes popping in when payments are loaded
+  useEffect(() => {
+    if (payments.length > 0) {
+      gsap.fromTo(".node-group",
+        { scale: 0, opacity: 0, transformOrigin: "center" },
+        { scale: 1, opacity: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.7)" }
+      );
+    }
+  }, [payments]);
+
   const connect = async () => {
     try {
       const { address: addr } = await kit.authModal();
@@ -211,7 +221,43 @@ function App() {
 
           <div className="visual-system">
               <div className="semicircle-top"></div>
-              <div className="central-data-image"></div>
+              <div className="central-data-image">
+                  <svg width="100%" height="100%" viewBox="0 0 480 280" style={{position: 'absolute', zIndex: 10}}>
+                      {payments.length > 0 && (
+                          <>
+                              {/* Center Contract Node */}
+                              <circle cx="240" cy="140" r="12" fill="var(--bg-color)" />
+                              <text x="240" y="120" fill="var(--bg-color)" fontSize="10" textAnchor="middle" letterSpacing="2" fontWeight="bold">CONTRACT</text>
+                              
+                              {/* Payment Edges & Nodes */}
+                              {payments.map((p, i) => {
+                                  const angle = (i / payments.length) * Math.PI * 2;
+                                  // Alternate radii to avoid clustering if many payments
+                                  const radius = payments.length > 4 ? (i % 2 === 0 ? 100 : 60) : 80; 
+                                  const x = 240 + Math.cos(angle) * radius;
+                                  const y = 140 + Math.sin(angle) * radius;
+                                  
+                                  return (
+                                    <g key={i} className="node-group">
+                                      <line x1="240" y1="140" x2={x} y2={y} stroke="var(--bg-color)" strokeWidth="1" strokeDasharray="4" />
+                                      <circle cx={x} cy={y} r="5" fill="var(--bg-color)" />
+                                      
+                                      {/* Amount Data */}
+                                      <text x={x} y={y - 12} fill="var(--bg-color)" fontSize="10" textAnchor="middle" fontWeight="bold">
+                                          {String(p.amount)} XLM
+                                      </text>
+                                      
+                                      {/* Address Data */}
+                                      <text x={x} y={y + 16} fill="var(--bg-color)" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                                          {String(p.to).slice(0, 4)}..{String(p.to).slice(-4)}
+                                      </text>
+                                    </g>
+                                  )
+                              })}
+                          </>
+                      )}
+                  </svg>
+              </div>
               <div className="semicircle-bottom">
                   <svg className="wave-graph" viewBox="0 0 480 120" ref={waveRef}>
                       <path d="M0,100 C50,80 100,110 150,60 C200,10 250,90 300,40 C350,10 400,60 480,20 L480,120 L0,120 Z"></path>
