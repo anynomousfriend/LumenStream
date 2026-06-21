@@ -2,6 +2,10 @@
 
 This repository contains a full-stack Stellar decentralized application (dApp) designed to record and track multi-address payments on the Stellar Testnet. It features a Rust-based Soroban smart contract and a modern React frontend with multi-wallet support.
 
+<p align="center">
+  <img src="./demo.gif" alt="LumenStream Demo" width="100%" />
+</p>
+
 ## Deployed Contract
 
 - **Testnet Contract ID**: `CA5HUAE5DEFVN62OCCI6NCQ4LSZ2AR67FGS4XC4YURJVLB2JVRZCDM6Q`
