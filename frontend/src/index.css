@@ -12,6 +12,41 @@
   padding: 0;
 }
 
+/* Minimal Brutalist Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-left: 1px solid var(--primary-blue);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border: 1px solid var(--bg-color);
+}
+::-webkit-scrollbar-corner {
+  background: var(--bg-color);
+}
+
+/* Lenis Smooth Scroll Recommended CSS */
+html.lenis {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+
 body {
   background-color: var(--bg-color);
   color: var(--text-blue);
