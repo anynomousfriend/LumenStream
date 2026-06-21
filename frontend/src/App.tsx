@@ -215,9 +215,9 @@ function App() {
                   )}
                   {payments.map((p, i) => (
                       <tr key={i} className="payment-row" onMouseEnter={(e) => gsap.to(e.currentTarget, { backgroundColor: 'rgba(62, 95, 176, 0.1)', duration: 0.2 })} onMouseLeave={(e) => gsap.to(e.currentTarget, { backgroundColor: 'transparent', duration: 0.2 })}>
-                          <td>{p.to().toString()}</td>
+                          <td>{String(p.to)}</td>
                           <td>XLM</td>
-                          <td>{p.amount().toString()}</td>
+                          <td>{String(p.amount)}</td>
                           <td><span className="status-pill">VERIFIED</span></td>
                       </tr>
                   ))}
