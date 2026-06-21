@@ -10,8 +10,94 @@ function App() {
   const [receiversStr, setReceiversStr] = useState<string>("");
   const [amountsStr, setAmountsStr] = useState<string>("");
   const [payments, setPayments] = useState<any[]>([]);
+  const [nodePositions, setNodePositions] = useState<{x: number, y: number}[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+      setNodePositions(prev => {
+        if (prev.length === payments.length) return prev;
+        return payments.map((p, i) => {
+            const angle = (i / payments.length) * Math.PI * 2;
+            const radius = payments.length > 4 ? (i % 2 === 0 ? 120 : 80) : 100; 
+            return {
+                x: 240 + Math.cos(angle) * radius,
+                y: 140 + Math.sin(angle) * radius
+            };
+        });
+      });
+  }, [payments]);
+
+  const handlePointerDown = (index: number, e: React.PointerEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      el.setPointerCapture(e.pointerId);
+      
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPos = nodePositions[index];
+
+      const onMove = (moveEvent: PointerEvent) => {
+          const dx = moveEvent.clientX - startX;
+          const dy = moveEvent.clientY - startY;
+          setNodePositions(prev => {
+              const newPos = [...prev];
+              if (newPos[index]) {
+                  newPos[index] = { x: startPos.x + dx, y: startPos.y + dy };
+              }
+              return newPos;
+          });
+      };
+
+      const onUp = (upEvent: PointerEvent) => {
+          el.releasePointerCapture(upEvent.pointerId);
+          el.removeEventListener('pointermove', onMove as any);
+          el.removeEventListener('pointerup', onUp as any);
+      };
+
+      el.addEventListener('pointermove', onMove as any);
+      el.addEventListener('pointerup', onUp as any);
+  };
+
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+      if (!svgContainerRef.current || payments.length === 0) return;
+      
+      const rect = svgContainerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      const scaleX = 480 / rect.width;
+      const scaleY = 280 / rect.height;
+      
+      const mappedMouseX = mouseX * scaleX;
+      const mappedMouseY = mouseY * scaleY;
+
+      nodePositions.forEach((pos, i) => {
+          const dx = pos.x - mappedMouseX;
+          const dy = pos.y - mappedMouseY;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          
+          if (dist < 60 && dist > 0) {
+              const force = (60 - dist) / 60;
+              const pushX = (dx / dist) * force * 15;
+              const pushY = (dy / dist) * force * 15;
+              
+              gsap.to(`#node-content-${i}`, { x: pushX, y: pushY, duration: 0.2, ease: "power2.out", overwrite: "auto" });
+              gsap.to(`#node-line-${i}`, { attr: { x2: pos.x + pushX, y2: pos.y + pushY }, duration: 0.2, ease: "power2.out", overwrite: "auto" });
+          } else {
+              gsap.to(`#node-content-${i}`, { x: 0, y: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+              gsap.to(`#node-line-${i}`, { attr: { x2: pos.x, y2: pos.y }, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+          }
+      });
+  };
+
+  const handleMouseLeave = () => {
+      nodePositions.forEach((pos, i) => {
+          gsap.to(`#node-content-${i}`, { x: 0, y: 0, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+          gsap.to(`#node-line-${i}`, { attr: { x2: pos.x, y2: pos.y }, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+      });
+  };
 
   const mainRef = useRef(null);
   const metaRef = useRef(null);
@@ -260,49 +346,94 @@ function App() {
 
           <div className="visual-system">
               <div className="semicircle-top"></div>
-              <div className="central-data-image">
-                  <svg width="100%" height="100%" viewBox="0 0 480 280" style={{position: 'absolute', zIndex: 10}}>
+              <div 
+                  className="central-data-image" 
+                  style={{ overflow: 'hidden' }}
+                  ref={svgContainerRef}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+              >
+                  <svg width="100%" height="100%" viewBox="0 0 480 280" style={{position: 'absolute', zIndex: 1}}>
                       {payments.length > 0 && (
                           <>
+                              {/* Payment Edges */}
+                              {nodePositions.map((pos, i) => (
+                                  <line id={`node-line-${i}`} key={`line-${i}`} x1="240" y1="140" x2={pos.x} y2={pos.y} stroke="var(--bg-color)" strokeWidth="2" strokeDasharray="4 4" opacity="0.9" />
+                              ))}
+                              
                               {/* Center Contract Node */}
                               <g className="center-node">
-                                <rect x="195" y="110" width="90" height="60" fill="transparent" stroke="var(--bg-color)" strokeWidth="1" />
+                                <rect x="195" y="110" width="90" height="60" fill="var(--primary-blue)" stroke="var(--bg-color)" strokeWidth="1" />
                                 <rect x="200" y="115" width="80" height="50" fill="var(--bg-color)" />
                                 <text x="240" y="145" fill="var(--text-blue)" fontSize="14" textAnchor="middle" letterSpacing="3" fontWeight="900">CORE</text>
                               </g>
-                              
-                              {/* Payment Edges & Nodes */}
-                              {payments.map((p, i) => {
-                                  const angle = (i / payments.length) * Math.PI * 2;
-                                  // Alternate radii to avoid clustering if many payments
-                                  const radius = payments.length > 4 ? (i % 2 === 0 ? 120 : 80) : 100; 
-                                  const x = 240 + Math.cos(angle) * radius;
-                                  const y = 140 + Math.sin(angle) * radius;
-                                  
-                                  return (
-                                    <g key={i} className="node-group">
-                                      <line x1="240" y1="140" x2={x} y2={y} stroke="var(--bg-color)" strokeWidth="2" strokeDasharray="4 4" opacity="0.9" />
-                                      
-                                      {/* Node Junction (Sharp Square) */}
-                                      <rect x={x - 4} y={y - 4} width="8" height="8" fill="var(--bg-color)" />
-                                      
-                                      {/* Amount Data Box */}
-                                      <rect x={x - 35} y={y - 34} width="70" height="24" fill="var(--bg-color)" />
-                                      <text x={x} y={y - 17} fill="var(--text-blue)" fontSize="12" textAnchor="middle" fontWeight="900" letterSpacing="0.5">
-                                          {String(p.amount)} XLM
-                                      </text>
-                                      
-                                      {/* Address Data Tag */}
-                                      <rect x={x - 40} y={y + 10} width="80" height="20" fill="transparent" stroke="var(--bg-color)" strokeWidth="1" />
-                                      <text x={x} y={y + 24} fill="var(--bg-color)" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="bold" letterSpacing="1">
-                                          {String(p.to).slice(0, 4)}..{String(p.to).slice(-4)}
-                                      </text>
-                                    </g>
-                                  )
-                              })}
                           </>
                       )}
                   </svg>
+                  
+                  {/* Draggable HTML Nodes */}
+                  {nodePositions.map((pos, i) => {
+                      const p = payments[i];
+                      if (!p) return null;
+                      return (
+                          <div 
+                              key={`node-${i}`}
+                              className="node-group"
+                              onPointerDown={(e) => handlePointerDown(i, e)}
+                              style={{
+                                  position: 'absolute',
+                                  left: `${(pos.x / 480) * 100}%`,
+                                  top: `${(pos.y / 280) * 100}%`,
+                                  transform: 'translate(-50%, -50%)',
+                                  zIndex: 10,
+                                  cursor: 'grab',
+                                  touchAction: 'none'
+                              }}
+                          >
+                              <div 
+                                id={`node-content-${i}`}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                }}
+                              >
+                                  {/* Node Junction */}
+                                  <div style={{ width: '8px', height: '8px', backgroundColor: 'var(--bg-color)', marginBottom: '4px' }} />
+                                  
+                                  {/* Amount Data Box */}
+                                  <div style={{
+                                      backgroundColor: 'var(--bg-color)',
+                                      color: 'var(--text-blue)',
+                                      padding: '4px 10px',
+                                      fontWeight: 900,
+                                      fontSize: '12px',
+                                      letterSpacing: '0.5px',
+                                      userSelect: 'none',
+                                      whiteSpace: 'nowrap'
+                                  }}>
+                                      {String(p.amount)} XLM
+                                  </div>
+                                  
+                                  {/* Address Data Tag */}
+                                  <div style={{
+                                      border: '1px solid var(--bg-color)',
+                                      color: 'var(--bg-color)',
+                                      padding: '2px 8px',
+                                      fontSize: '10px',
+                                      fontFamily: 'monospace',
+                                      fontWeight: 'bold',
+                                      letterSpacing: '1px',
+                                      userSelect: 'none',
+                                      whiteSpace: 'nowrap'
+                                  }}>
+                                      {String(p.to).slice(0, 4)}..{String(p.to).slice(-4)}
+                                  </div>
+                              </div>
+                          </div>
+                      );
+                  })}
               </div>
               <div className="semicircle-bottom">
                   <svg className="wave-graph" viewBox="0 0 480 120" ref={waveRef}>
