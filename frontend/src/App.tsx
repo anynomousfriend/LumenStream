@@ -231,7 +231,7 @@ function App() {
               <input 
                 type="text" 
                 className="field-input" 
-                placeholder="CA5H..."
+                placeholder="CA5HUAE5DEFVN62OCCI6NCQ4LSZ2AR67FGS4XC4YURJVLB2JVRZCDM6Q"
                 value={contractInput}
                 onChange={e => setContractInput(e.target.value)}
               />
